@@ -13,9 +13,50 @@ class Node:
         self.count += frequency
 
     def display(self, ind=1):
-        print('  '*ind, self.itemName, ' ', self.count)
+        print('  ' * ind, self.itemName, ' ', self.count)
         for child in list(self.children.values()):
             child.display(ind+1)
+
+def getFromFile(fname):
+    itemSetList = []
+    frequency = []
+    
+    with open(fname, 'r') as file:
+        csv_reader = reader(file)
+        for line in csv_reader:
+            itemSetList.append(line)
+            frequency.append(1)
+
+    return itemSetList, frequency
+
+def constructTree(itemSetList, frequency, minSup):
+    headerTable = defaultdict(int)
+    # Counting frequency and create header table
+    for idx, itemSet in enumerate(itemSetList):
+        for item in itemSet:
+            headerTable[item] += frequency[idx]
+
+    # Deleting items below minSup
+    headerTable = dict((item, sup) for item, sup in headerTable.items() if sup >= minSup)
+    if(len(headerTable) == 0):
+        return None, None
+
+    # HeaderTable column [Item: [frequency, headNode]]
+    for item in headerTable:
+        headerTable[item] = [headerTable[item], None]
+
+    # Init Null head node
+    fpTree = Node('Null', 1, None)
+    # Update FP tree for each cleaned and sorted itemSet
+    for idx, itemSet in enumerate(itemSetList):
+        itemSet = [item for item in itemSet if item in headerTable]
+        itemSet.sort(key=lambda item: headerTable[item][0], reverse=True)
+        # Traverse from root to leaf, update tree with given item
+        currentNode = fpTree
+        for item in itemSet:
+            currentNode = updateTree(item, currentNode, headerTable, frequency[idx])
+
+    return fpTree, headerTable
 
 def updateHeaderTable(item, targetNode, headerTable):
     if(headerTable[item][1] == None):
@@ -63,10 +104,9 @@ def findPrefixPath(basePat, headerTable):
         treeNode = treeNode.next  
     return condPats, frequency
 
-
-def mineTree(inTree, headerTable, minSup, preFix, freqItemList):
+def mineTree(headerTable, minSup, preFix, freqItemList):
     # Sort the items with frequency and create a list
-    sortedItemList = [v[0] for v in sorted(list(headerTable.items()), key=lambda p:p[1][0])] 
+    sortedItemList = [item[0] for item in sorted(list(headerTable.items()), key=lambda p:p[1][0])] 
     print('sortedItemList', sortedItemList)
     # Start with the lowest frequency
     for item in sortedItemList:  
@@ -81,57 +121,16 @@ def mineTree(inTree, headerTable, minSup, preFix, freqItemList):
         print()
         # print('Condition pattern base', conditionalPattBase)
         # Construct conditonal FP Tree with conditional pattern base
-        conditionalTree, headNode = constructTree(conditionalPattBase, frequency, minSup) 
-        # print('head', headNode)
+        conditionalTree, newHeaderTable = constructTree(conditionalPattBase, frequency, minSup) 
+        # print('head', newHeaderTable)
         # print()
-        if headNode != None:
+        if newHeaderTable != None:
             # print('conditional tree for: ', newFreqSet)
             # conditionalTree.display(1)
 
             # Mining recursively on the tree
-            mineTree(conditionalTree, headNode, minSup,
+            mineTree(newHeaderTable, minSup,
                        newFreqSet, freqItemList)
-
-def getFromFile(fname):
-    itemSetList = []
-    frequency = []
-    
-    with open(fname, 'r') as file:
-        csv_reader = reader(file)
-        for line in csv_reader:
-            itemSetList.append(line)
-            frequency.append(1)
-
-    return itemSetList, frequency
-
-def constructTree(itemSetList, frequency, minSup):
-    headerTable = defaultdict(int)
-    # Counting frequency and create header table
-    for idx, itemSet in enumerate(itemSetList):
-        for item in itemSet:
-            headerTable[item] += frequency[idx]
-
-    # Deleting items below minSup
-    headerTable = dict((item, sup) for item, sup in headerTable.items() if sup >= minSup)
-    if(len(headerTable) == 0):
-        return None, None
-
-    # HeaderTable column [Item: [frequency, headNode]]
-    for item in headerTable:
-        headerTable[item] = [headerTable[item], None]
-
-    # Init Null head node
-    fpTree = Node('Null', 1, None)
-    # Update FP tree for each cleaned and sorted itemSet
-    for idx, itemSet in enumerate(itemSetList):
-        itemSet = [item for item in itemSet if item in headerTable]
-        itemSet.sort(key=lambda item: headerTable[item][0], reverse=True)
-        # Traverse from root to leaf, update tree with given item
-        currentNode = fpTree
-        for item in itemSet:
-            currentNode = updateTree(item, currentNode, headerTable, frequency[idx])
-
-    return fpTree, headerTable
 
 if __name__ == "__main__":
     minSup = 3
@@ -143,7 +142,7 @@ if __name__ == "__main__":
     else:
         fpTree.display()
         freqItems = []
-        mineTree(fpTree, headerTable, minSup, set([]), freqItems)
+        mineTree(headerTable, minSup, set(), freqItems)
         for x in freqItems:
             print(x)
 
