@@ -23,13 +23,13 @@ def updateHeader(nodeToTest, targetNode):
         nodeToTest = nodeToTest.nodeLink
     nodeToTest.nodeLink = targetNode
 
-def updateFPtree(items, inTree, headerTable, count):
+def updateFPtree(items, inTree, headerTable, frequency):
     if items[0] in inTree.children:
         # incrementrement the count if the item already exists
-        inTree.children[items[0]].increment(count)
+        inTree.children[items[0]].increment(frequency)
     else:
         # Create a new branch
-        inTree.children[items[0]] = treeNode(items[0], count, inTree)
+        inTree.children[items[0]] = treeNode(items[0], frequency, inTree)
         # Link the linked list at header table
         if headerTable[items[0]][1] == None:
             headerTable[items[0]][1] = inTree.children[items[0]]
@@ -37,12 +37,12 @@ def updateFPtree(items, inTree, headerTable, count):
             updateHeader(headerTable[items[0]][1], inTree.children[items[0]])
     # Going to the next item
     if len(items) > 1:
-        updateFPtree(items[1::], inTree.children[items[0]], headerTable, count)
+        updateFPtree(items[1::], inTree.children[items[0]], headerTable, frequency)
 
-def ascendFPtree(leafNode, prefixPath):
-    if leafNode.parent != None:
-        prefixPath.append(leafNode.item)
-        ascendFPtree(leafNode.parent, prefixPath)
+def ascendFPtree(node, prefixPath):
+    if node.parent != None:
+        prefixPath.append(node.item)
+        ascendFPtree(node.parent, prefixPath)
 
 def findPrefixPath(basePat, headerTable):
     # First node in linked list
@@ -63,7 +63,7 @@ def findPrefixPath(basePat, headerTable):
     return condPats, frequency
 
 
-def mineFPtree(inTree, headerTable, minSup, preFix, freqItemList):
+def mineTree(inTree, headerTable, minSup, preFix, freqItemList):
     # Sort the items with frequency and create a list
     sortedItemList = [v[0] for v in sorted(list(headerTable.items()), key=lambda p:p[1][0])] 
     print('sortedItemList', sortedItemList)
@@ -80,7 +80,7 @@ def mineFPtree(inTree, headerTable, minSup, preFix, freqItemList):
         print()
         # print('Condition pattern base', conditionalPattBase)
         # Construct conditonal FP Tree with conditional pattern base
-        conditionalTree, headNode = createFPtree(conditionalPattBase, frequency, minSup) 
+        conditionalTree, headNode = constructTree(conditionalPattBase, frequency, minSup) 
         # print('head', headNode)
         # print()
         if headNode != None:
@@ -88,7 +88,7 @@ def mineFPtree(inTree, headerTable, minSup, preFix, freqItemList):
             # conditionalTree.display(1)
 
             # Mining recursively on the tree
-            mineFPtree(conditionalTree, headNode, minSup,
+            mineTree(conditionalTree, headNode, minSup,
                        newFreqSet, freqItemList)
 
 def getFromFile(fname):
@@ -103,7 +103,7 @@ def getFromFile(fname):
 
     return transactions, frequency
 
-def createFPtree(transactionList, frequency, minSup):
+def constructTree(transactionList, frequency, minSup):
     headerTable = defaultdict(int)
     cleanedTransactionList = {}
     # Counting frequency and create header table
@@ -121,7 +121,7 @@ def createFPtree(transactionList, frequency, minSup):
         headerTable[item] = [headerTable[item], None]
 
     # Init Null head node
-    fpTree = treeNode('Null Set', 1, None)
+    fpTree = treeNode('Null', 1, None)
     # Update FP tree for each cleaned and sorted transaction
     for idx, transaction in enumerate(transactionList):
         transaction = [item for item in transaction if item in headerTable]
@@ -135,10 +135,10 @@ if __name__ == "__main__":
     minSup = 3
     fname = 'tesco'
     transactionList, frequency = getFromFile(fname + '.csv')
-    fpTree, headerTable = createFPtree(transactionList, frequency, minSup)
+    fpTree, headerTable = constructTree(transactionList, frequency, minSup)
     fpTree.display()
 
     freqItems = []
-    mineFPtree(fpTree, headerTable, minSup, set([]), freqItems)
+    mineTree(fpTree, headerTable, minSup, set([]), freqItems)
     for x in freqItems:
         print(x)
