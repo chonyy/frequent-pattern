@@ -81,8 +81,8 @@ def associationRule(freqItemSet, itemSetWithSup, minConf):
                     print('{} ==> {}   {:.3f}'.format(set(s), set(item.difference(s)), confidence))
 
 if __name__ == "__main__":
-    fname = 'data2'
-    dataToCSV(fname)
+    fname = 'tesco2'
+    # dataToCSV(fname)
     C1ItemSet, transactionList = getFromFile(fname + '.csv')
 
     # Final result global frequent itemset

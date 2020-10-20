@@ -1,47 +1,50 @@
 from collections import defaultdict, OrderedDict
 from csv import reader
 
-class treeNode:
+class Node:
     def __init__(self, itemName, frequency, parentNode):
-        self.item = itemName
+        self.itemName = itemName
         self.count = frequency
-        self.nodeLink = None
         self.parent = parentNode
         self.children = {}
+        self.next = None
 
     def increment(self, frequency):
         self.count += frequency
 
     def display(self, ind=1):
-        print('  '*ind, self.item, ' ', self.count)
+        print('  '*ind, self.itemName, ' ', self.count)
         for child in list(self.children.values()):
             child.display(ind+1)
 
 def updateHeader(nodeToTest, targetNode):
     # Traverse to the last node then link it to the target
-    while nodeToTest.nodeLink != None:
-        nodeToTest = nodeToTest.nodeLink
-    nodeToTest.nodeLink = targetNode
+    while nodeToTest.next != None:
+        nodeToTest = nodeToTest.next
+    nodeToTest.next = targetNode
 
-def updateFPtree(items, inTree, headerTable, frequency):
-    if items[0] in inTree.children:
+def updateFPtree(items, tree, headerTable, frequency):
+    currentItem = items[0]
+    if currentItem in tree.children:
         # incrementrement the count if the item already exists
-        inTree.children[items[0]].increment(frequency)
+        tree.children[currentItem].increment(frequency)
     else:
         # Create a new branch
-        inTree.children[items[0]] = treeNode(items[0], frequency, inTree)
+        tree.children[currentItem] = Node(currentItem, frequency, tree)
         # Link the linked list at header table
-        if headerTable[items[0]][1] == None:
-            headerTable[items[0]][1] = inTree.children[items[0]]
+        if headerTable[currentItem][1] == None:
+            headerTable[currentItem][1] = tree.children[currentItem]
         else:
-            updateHeader(headerTable[items[0]][1], inTree.children[items[0]])
+            updateHeader(headerTable[currentItem][1], tree.children[currentItem])
     # Going to the next item
     if len(items) > 1:
-        updateFPtree(items[1::], inTree.children[items[0]], headerTable, frequency)
+        print('item1', items[1::])
+        print('item2', items)
+        updateFPtree(items[1::], tree.children[currentItem], headerTable, frequency)
 
 def ascendFPtree(node, prefixPath):
     if node.parent != None:
-        prefixPath.append(node.item)
+        prefixPath.append(node.itemName)
         ascendFPtree(node.parent, prefixPath)
 
 def findPrefixPath(basePat, headerTable):
@@ -59,7 +62,7 @@ def findPrefixPath(basePat, headerTable):
             frequency.append(treeNode.count)
 
         # Go to next node
-        treeNode = treeNode.nodeLink  
+        treeNode = treeNode.next  
     return condPats, frequency
 
 
@@ -103,11 +106,10 @@ def getFromFile(fname):
 
     return transactions, frequency
 
-def constructTree(transactionList, frequency, minSup):
+def constructTree(itemSetList, frequency, minSup):
     headerTable = defaultdict(int)
-    cleanedTransactionList = {}
     # Counting frequency and create header table
-    for idx, transaction in enumerate(transactionList):
+    for idx, transaction in enumerate(itemSetList):
         for item in transaction:
             headerTable[item] += frequency[idx]
 
@@ -121,9 +123,9 @@ def constructTree(transactionList, frequency, minSup):
         headerTable[item] = [headerTable[item], None]
 
     # Init Null head node
-    fpTree = treeNode('Null', 1, None)
+    fpTree = Node('Null', 1, None)
     # Update FP tree for each cleaned and sorted transaction
-    for idx, transaction in enumerate(transactionList):
+    for idx, transaction in enumerate(itemSetList):
         transaction = [item for item in transaction if item in headerTable]
         transaction.sort(key=lambda item: headerTable[item][0], reverse=True)
         # print('transaction', transaction)
@@ -133,12 +135,15 @@ def constructTree(transactionList, frequency, minSup):
 
 if __name__ == "__main__":
     minSup = 3
-    fname = 'tesco'
-    transactionList, frequency = getFromFile(fname + '.csv')
-    fpTree, headerTable = constructTree(transactionList, frequency, minSup)
-    fpTree.display()
+    fname = 'data'
+    itemSetList, frequency = getFromFile(fname + '.csv')
+    fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
+    if(fpTree == None):
+        print('No frequent item set')
+    else:
+        fpTree.display()
+        freqItems = []
+        mineTree(fpTree, headerTable, minSup, set([]), freqItems)
+        for x in freqItems:
+            print(x)
 
-    freqItems = []
-    mineTree(fpTree, headerTable, minSup, set([]), freqItems)
-    for x in freqItems:
-        print(x)
