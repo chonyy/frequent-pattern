@@ -23,24 +23,20 @@ def updateHeader(nodeToTest, targetNode):
         nodeToTest = nodeToTest.next
     nodeToTest.next = targetNode
 
-def updateFPtree(items, tree, headerTable, frequency):
-    currentItem = items[0]
-    if currentItem in tree.children:
+def updateTree(item, tree, headerTable, frequency):
+    if item in tree.children:
         # incrementrement the count if the item already exists
-        tree.children[currentItem].increment(frequency)
+        tree.children[item].increment(frequency)
     else:
         # Create a new branch
-        tree.children[currentItem] = Node(currentItem, frequency, tree)
+        tree.children[item] = Node(item, frequency, tree)
         # Link the linked list at header table
-        if headerTable[currentItem][1] == None:
-            headerTable[currentItem][1] = tree.children[currentItem]
+        if headerTable[item][1] == None:
+            headerTable[item][1] = tree.children[item]
         else:
-            updateHeader(headerTable[currentItem][1], tree.children[currentItem])
-    # Going to the next item
-    if len(items) > 1:
-        print('item1', items[1::])
-        print('item2', items)
-        updateFPtree(items[1::], tree.children[currentItem], headerTable, frequency)
+            updateHeader(headerTable[item][1], tree.children[item])
+
+    return tree.children[item]
 
 def ascendFPtree(node, prefixPath):
     if node.parent != None:
@@ -109,8 +105,8 @@ def getFromFile(fname):
 def constructTree(itemSetList, frequency, minSup):
     headerTable = defaultdict(int)
     # Counting frequency and create header table
-    for idx, transaction in enumerate(itemSetList):
-        for item in transaction:
+    for idx, itemSet in enumerate(itemSetList):
+        for item in itemSet:
             headerTable[item] += frequency[idx]
 
     # Deleting items below minSup
@@ -124,18 +120,21 @@ def constructTree(itemSetList, frequency, minSup):
 
     # Init Null head node
     fpTree = Node('Null', 1, None)
-    # Update FP tree for each cleaned and sorted transaction
-    for idx, transaction in enumerate(itemSetList):
-        transaction = [item for item in transaction if item in headerTable]
-        transaction.sort(key=lambda item: headerTable[item][0], reverse=True)
-        # print('transaction', transaction)
-        updateFPtree(transaction, fpTree, headerTable, frequency[idx])
+    # Update FP tree for each cleaned and sorted itemSet
+    for idx, itemSet in enumerate(itemSetList):
+        itemSet = [item for item in itemSet if item in headerTable]
+        itemSet.sort(key=lambda item: headerTable[item][0], reverse=True)
+
+        # Traverse from root to leaf, update tree for given item
+        currentNode = fpTree
+        for item in itemSet:
+            currentNode = updateTree(item, currentNode, headerTable, frequency[idx])
 
     return fpTree, headerTable
 
 if __name__ == "__main__":
     minSup = 3
-    fname = 'data'
+    fname = 'tesco'
     itemSetList, frequency = getFromFile(fname + '.csv')
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
     if(fpTree == None):
