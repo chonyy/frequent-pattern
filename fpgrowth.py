@@ -117,16 +117,12 @@ def mineTree(headerTable, minSup, preFix, freqItemList):
         # Find all prefix path, constrcut conditional pattern base
         conditionalPattBase, frequency = findPrefixPath(item, headerTable) 
         print('current item', item)
-        print('new', newFreqSet)
-        print()
-        # print('Condition pattern base', conditionalPattBase)
         # Construct conditonal FP Tree with conditional pattern base
         conditionalTree, newHeaderTable = constructTree(conditionalPattBase, frequency, minSup) 
-        # print('head', newHeaderTable)
-        # print()
         if newHeaderTable != None:
-            # print('conditional tree for: ', newFreqSet)
-            # conditionalTree.display(1)
+            print('current item', item)
+            print('conditional tree for: ', newFreqSet)
+            conditionalTree.display(1)
 
             # Mining recursively on the tree
             mineTree(newHeaderTable, minSup,
