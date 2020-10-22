@@ -150,7 +150,7 @@ def associationRule(freqItemSet, itemSetList, minConf):
     return rules
 
 if __name__ == "__main__":
-    minSupRatio = 0.3
+    minSupRatio = 0.1
     minConf = 0.5
     fname = 'data7'
     itemSetList, frequency = getFromFile(fname + '.csv')

@@ -82,7 +82,7 @@ def associationRule(freqItemSet, itemSetWithSup, minConf):
     return rules
 
 if __name__ == "__main__":
-    fname = 'data5'
+    fname = 'data7'
     # dataToCSV(fname)
     C1ItemSet, itemSetList = getFromFile(fname + '.csv')
 
@@ -90,8 +90,8 @@ if __name__ == "__main__":
     globalFreqItemSet = dict()
     # Storing global itemset with support count
     globalItemSetWithSup = defaultdict(int)
-    minSup = 0.5
-    minConf = 0.8
+    minSup = 0.1
+    minConf = 0.5
 
     L1ItemSet = getAboveMinSup(C1ItemSet, itemSetList, minSup, globalItemSetWithSup)
     currentLSet = L1ItemSet
@@ -100,6 +100,7 @@ if __name__ == "__main__":
     # Calculating frequent item set
     while(currentLSet):
         # Storing frequent itemset
+        print(k)
         globalFreqItemSet[k-1] = currentLSet
         # Self-joining Lk
         candidateSet = getUnion(currentLSet, k)
