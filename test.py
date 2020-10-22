@@ -8,9 +8,9 @@ def dataToCSV(fname):
     with open(fname, 'r') as dataFile, open(fname + '.csv', 'w') as outputCSV:
         for line in dataFile:
             nums = line.split()
-            transactionID = nums[1]
+            itemSetID = nums[1]
             item = nums[2]
-            if(int(transactionID) == currentID):
+            if(int(itemSetID) == currentID):
                 if(first):
                     outputCSV.write(item)
                 else:
@@ -24,32 +24,33 @@ def powerset(s):
     return chain.from_iterable(combinations(s, r) for r in range(1, len(s)))
 
 def getFromFile(fname):
-    transactions = []
+    itemSets = []
     itemSet = set()
     
     with open(fname, 'r') as file:
         csv_reader = reader(file)
         for line in csv_reader:
+            line = list(filter(None, line))
             record = set(line)
             for item in record:
                 itemSet.add(frozenset([item]))
-            transactions.append(record)
+            itemSets.append(record)
     # print(itemSet)
-    # print(transactions)
-    return itemSet, transactions
+    # print(itemSets)
+    return itemSet, itemSets
             
-def getAboveMinSup(itemSet, transactionList, minSup, globalItemSetWithSup):
+def getAboveMinSup(itemSet, itemSetList, minSup, globalItemSetWithSup):
     freqItemSet = set()
     localItemSetWithSup = defaultdict(int)
 
     for item in itemSet:
-        for transaction in transactionList:
-            if item.issubset(transaction):
+        for itemSet in itemSetList:
+            if item.issubset(itemSet):
                 globalItemSetWithSup[item] += 1
                 localItemSetWithSup[item] += 1
 
     for item, supCount in localItemSetWithSup.items():
-        support = float(supCount / len(transactionList))
+        support = float(supCount / len(itemSetList))
         if(support >= minSup):
             freqItemSet.add(item)
 
@@ -70,29 +71,29 @@ def pruning(candidateSet, prevFreqSet, length):
     return tempCandidateSet
 
 def associationRule(freqItemSet, itemSetWithSup, minConf):
-    for i, itemSet in freqItemSet.items():
+    rules = []
+    for k, itemSet in freqItemSet.items():
         for item in itemSet:
-            print()
-            print('item', item)
             subsets = powerset(item)
             for s in subsets:
                 confidence = float(itemSetWithSup[item] / itemSetWithSup[frozenset(s)])
                 if(confidence > minConf):
-                    print('{} ==> {}   {:.3f}'.format(set(s), set(item.difference(s)), confidence))
+                    rules.append([set(s), set(item.difference(s)), confidence])
+    return rules
 
 if __name__ == "__main__":
-    fname = 'tesco2'
-    # dataToCSV(fname)
-    C1ItemSet, transactionList = getFromFile(fname + '.csv')
+    fname = 'data7'
+    dataToCSV(fname)
+    C1ItemSet, itemSetList = getFromFile(fname + '.csv')
 
     # Final result global frequent itemset
     globalFreqItemSet = dict()
     # Storing global itemset with support count
     globalItemSetWithSup = defaultdict(int)
-    minSup = 0.5
-    minConf = 0.5
+    minSup = 0.4
+    minConf = 0.3
 
-    L1ItemSet = getAboveMinSup(C1ItemSet, transactionList, minSup, globalItemSetWithSup)
+    L1ItemSet = getAboveMinSup(C1ItemSet, itemSetList, minSup, globalItemSetWithSup)
     currentLSet = L1ItemSet
     k = 2
 
@@ -107,10 +108,17 @@ if __name__ == "__main__":
         candidateSet = pruning(candidateSet, currentLSet, k-1)
         # print('after pruning', candidateSet)
         # print()
-        # Scanning transaction for counting support
-        currentLSet = getAboveMinSup(candidateSet, transactionList, minSup, globalItemSetWithSup)
+        # Scanning itemSet for counting support
+        currentLSet = getAboveMinSup(candidateSet, itemSetList, minSup, globalItemSetWithSup)
         k += 1
 
+    print('Frequent patterns:')
+    for k, itemSetList in globalFreqItemSet.items():
+        for itemSet in itemSetList:
+            print(set(itemSet))
+    
     # Generating rule
-    print(globalFreqItemSet)
-    associationRule(globalFreqItemSet, globalItemSetWithSup, minConf)
+    print('rules:')
+    rules = associationRule(globalFreqItemSet, globalItemSetWithSup, minConf)
+    for rule in rules:
+        print('{} ==> {}   {:.3f}'.format(rule[0], rule[1], rule[2]))

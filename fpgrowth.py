@@ -140,32 +140,37 @@ def getSupport(testSet, itemSetList):
     return count
 
 def associationRule(freqItemSet, itemSetList, minConf):
+    rules = []
     for itemSet in freqItemSet:
-        print()
-        print('item', itemSet)
         subsets = powerset(itemSet)
         for s in subsets:
             confidence = float(getSupport(itemSet, itemSetList) / getSupport(s, itemSetList))
             if(confidence > minConf):
-                print('{} ==> {}   {:.3f}'.format(set(s), set(itemSet.difference(s)), confidence))
+                rules.append([set(s), set(itemSet.difference(s)), confidence])
+    return rules
 
 if __name__ == "__main__":
-    minSupRatio = 0.5
+    minSupRatio = 0.1
     minConf = 0.5
-    fname = 'tesco2'
+    fname = 'data7'
     itemSetList, frequency = getFromFile(fname + '.csv')
     minSup = len(itemSetList) * minSupRatio
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
     if(fpTree == None):
         print('No frequent item set')
     else:
-        fpTree.display()
+        # fpTree.display()
         freqItems = []
         mineTree(headerTable, minSup, set(), freqItems)
+        
+        print('Frequent patterns:')
         for x in freqItems:
             print(x)
 
-        associationRule(freqItems, itemSetList, minConf)
+        rules = associationRule(freqItems, itemSetList, minConf)
+        print('\nRules:')
+        for rule in rules:
+            print('{} ==> {}   {:.3f}'.format(rule[0], rule[1], rule[2]))
         
 
 # https://www.kaggle.com/newshuntkannada/dataset-for-apriori-and-fp-growth-algorithm
