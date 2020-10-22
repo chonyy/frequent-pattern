@@ -1,5 +1,6 @@
 from collections import defaultdict, OrderedDict
 from csv import reader
+from itertools import chain, combinations
 
 class Node:
     def __init__(self, itemName, frequency, parentNode):
@@ -24,6 +25,7 @@ def getFromFile(fname):
     with open(fname, 'r') as file:
         csv_reader = reader(file)
         for line in csv_reader:
+            line = list(filter(None, line))
             itemSetList.append(line)
             frequency.append(1)
 
@@ -107,7 +109,7 @@ def findPrefixPath(basePat, headerTable):
 def mineTree(headerTable, minSup, preFix, freqItemList):
     # Sort the items with frequency and create a list
     sortedItemList = [item[0] for item in sorted(list(headerTable.items()), key=lambda p:p[1][0])] 
-    print('sortedItemList', sortedItemList)
+    # print('sortedItemList', sortedItemList)
     # Start with the lowest frequency
     for item in sortedItemList:  
         # Pattern growth is achieved by the concatenation of suffix pattern with frequent patterns generated from conditional FP-tree
@@ -119,18 +121,40 @@ def mineTree(headerTable, minSup, preFix, freqItemList):
         # Construct conditonal FP Tree with conditional pattern base
         conditionalTree, newHeaderTable = constructTree(conditionalPattBase, frequency, minSup) 
         if newHeaderTable != None:
-            print('current item', item)
-            print('conditional tree for: ', newFreqSet)
-            conditionalTree.display(1)
+            # print('current item', item)
+            # print('conditional tree for: ', newFreqSet)
+            # conditionalTree.display(1)
 
             # Mining recursively on the tree
             mineTree(newHeaderTable, minSup,
                        newFreqSet, freqItemList)
 
+def powerset(s):
+    return chain.from_iterable(combinations(s, r) for r in range(1, len(s)))
+
+def getSupport(testSet, itemSetList):
+    count = 0
+    for itemSet in itemSetList:
+        if(set(testSet).issubset(itemSet)):
+            count += 1
+    return count
+
+def associationRule(freqItemSet, itemSetList, minConf):
+    for itemSet in freqItemSet:
+        print()
+        print('item', itemSet)
+        subsets = powerset(itemSet)
+        for s in subsets:
+            confidence = float(getSupport(itemSet, itemSetList) / getSupport(s, itemSetList))
+            if(confidence > minConf):
+                print('{} ==> {}   {:.3f}'.format(set(s), set(itemSet.difference(s)), confidence))
+
 if __name__ == "__main__":
-    minSup = 3
-    fname = 'tesco'
+    minSupRatio = 0.5
+    minConf = 0.5
+    fname = 'tesco2'
     itemSetList, frequency = getFromFile(fname + '.csv')
+    minSup = len(itemSetList) * minSupRatio
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
     if(fpTree == None):
         print('No frequent item set')
@@ -141,3 +165,7 @@ if __name__ == "__main__":
         for x in freqItems:
             print(x)
 
+        associationRule(freqItems, itemSetList, minConf)
+        
+
+# https://www.kaggle.com/newshuntkannada/dataset-for-apriori-and-fp-growth-algorithm

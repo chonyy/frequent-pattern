@@ -34,8 +34,8 @@ def getFromFile(fname):
             for item in record:
                 itemSet.add(frozenset([item]))
             transactions.append(record)
-    print(itemSet)
-    print(transactions)
+    # print(itemSet)
+    # print(transactions)
     return itemSet, transactions
             
 def getAboveMinSup(itemSet, transactionList, minSup, globalItemSetWithSup):
@@ -89,8 +89,8 @@ if __name__ == "__main__":
     globalFreqItemSet = dict()
     # Storing global itemset with support count
     globalItemSetWithSup = defaultdict(int)
-    minSup = 0.6
-    minConf = 0.6
+    minSup = 0.5
+    minConf = 0.5
 
     L1ItemSet = getAboveMinSup(C1ItemSet, transactionList, minSup, globalItemSetWithSup)
     currentLSet = L1ItemSet
@@ -112,4 +112,5 @@ if __name__ == "__main__":
         k += 1
 
     # Generating rule
+    print(globalFreqItemSet)
     associationRule(globalFreqItemSet, globalItemSetWithSup, minConf)
