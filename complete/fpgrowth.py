@@ -112,6 +112,7 @@ def mineTree(headerTable, minSup, preFix, freqItemList):
     # print('sortedItemList', sortedItemList)
     # Start with the lowest frequency
     for item in sortedItemList:  
+        print('checking', item, 'in', sortedItemList)
         # Pattern growth is achieved by the concatenation of suffix pattern with frequent patterns generated from conditional FP-tree
         newFreqSet = preFix.copy()
         newFreqSet.add(item)
@@ -143,16 +144,17 @@ def associationRule(freqItemSet, itemSetList, minConf):
     rules = []
     for itemSet in freqItemSet:
         subsets = powerset(itemSet)
+        itemSetSup = getSupport(itemSet, itemSetList)
         for s in subsets:
-            confidence = float(getSupport(itemSet, itemSetList) / getSupport(s, itemSetList))
+            confidence = float(itemSetSup / getSupport(s, itemSetList))
             if(confidence > minConf):
                 rules.append([set(s), set(itemSet.difference(s)), confidence])
     return rules
 
 if __name__ == "__main__":
-    minSupRatio = 0.1
+    minSupRatio = 0.5
     minConf = 0.5
-    fname = 'data7'
+    fname = 'tesco'
     itemSetList, frequency = getFromFile(fname + '.csv')
     minSup = len(itemSetList) * minSupRatio
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
