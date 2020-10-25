@@ -152,9 +152,9 @@ def associationRule(freqItemSet, itemSetList, minConf):
     return rules
 
 if __name__ == "__main__":
-    minSupRatio = 0.5
+    minSupRatio = 0.1
     minConf = 0.5
-    fname = 'tesco'
+    fname = 'data7'
     itemSetList, frequency = getFromFile(fname + '.csv')
     minSup = len(itemSetList) * minSupRatio
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
@@ -171,6 +171,7 @@ if __name__ == "__main__":
 
         rules = associationRule(freqItems, itemSetList, minConf)
         print('\nRules:')
+        rules.sort(key= lambda x:x[2])
         for rule in rules:
             print('{} ==> {}   {:.3f}'.format(rule[0], rule[1], rule[2]))
         

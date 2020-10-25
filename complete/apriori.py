@@ -35,8 +35,6 @@ def getFromFile(fname):
             for item in record:
                 itemSet.add(frozenset([item]))
             itemSets.append(record)
-    # print(itemSet)
-    # print(itemSets)
     return itemSet, itemSets
             
 def getAboveMinSup(itemSet, itemSetList, minSup, globalItemSetWithSup):
@@ -82,7 +80,7 @@ def associationRule(freqItemSet, itemSetWithSup, minConf):
     return rules
 
 if __name__ == "__main__":
-    fname = 'data7'
+    fname = 'tesco2'
     # dataToCSV(fname)
     C1ItemSet, itemSetList = getFromFile(fname + '.csv')
 
@@ -90,7 +88,7 @@ if __name__ == "__main__":
     globalFreqItemSet = dict()
     # Storing global itemset with support count
     globalItemSetWithSup = defaultdict(int)
-    minSup = 0.1
+    minSup = 0.5
     minConf = 0.5
 
     L1ItemSet = getAboveMinSup(C1ItemSet, itemSetList, minSup, globalItemSetWithSup)
@@ -100,15 +98,11 @@ if __name__ == "__main__":
     # Calculating frequent item set
     while(currentLSet):
         # Storing frequent itemset
-        print(k)
         globalFreqItemSet[k-1] = currentLSet
         # Self-joining Lk
         candidateSet = getUnion(currentLSet, k)
-        # print('candidate', candidateSet)
         # Perform subset testing and remove pruned supersets
         candidateSet = pruning(candidateSet, currentLSet, k-1)
-        # print('after pruning', candidateSet)
-        # print()
         # Scanning itemSet for counting support
         currentLSet = getAboveMinSup(candidateSet, itemSetList, minSup, globalItemSetWithSup)
         k += 1
@@ -121,5 +115,6 @@ if __name__ == "__main__":
     # Generating rule
     print('rules:')
     rules = associationRule(globalFreqItemSet, globalItemSetWithSup, minConf)
+    rules.sort(key=lambda x: x[2])
     for rule in rules:
         print('{} ==> {}   {:.3f}'.format(rule[0], rule[1], rule[2]))
