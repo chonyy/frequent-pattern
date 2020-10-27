@@ -1,6 +1,7 @@
 from collections import defaultdict, OrderedDict
 from csv import reader
 from itertools import chain, combinations
+from optparse import OptionParser
 
 class Node:
     def __init__(self, itemName, frequency, parentNode):
@@ -109,10 +110,8 @@ def findPrefixPath(basePat, headerTable):
 def mineTree(headerTable, minSup, preFix, freqItemList):
     # Sort the items with frequency and create a list
     sortedItemList = [item[0] for item in sorted(list(headerTable.items()), key=lambda p:p[1][0])] 
-    # print('sortedItemList', sortedItemList)
     # Start with the lowest frequency
     for item in sortedItemList:  
-        print('checking', item, 'in', sortedItemList)
         # Pattern growth is achieved by the concatenation of suffix pattern with frequent patterns generated from conditional FP-tree
         newFreqSet = preFix.copy()
         newFreqSet.add(item)
@@ -122,10 +121,6 @@ def mineTree(headerTable, minSup, preFix, freqItemList):
         # Construct conditonal FP Tree with conditional pattern base
         conditionalTree, newHeaderTable = constructTree(conditionalPattBase, frequency, minSup) 
         if newHeaderTable != None:
-            # print('current item', item)
-            # print('conditional tree for: ', newFreqSet)
-            # conditionalTree.display(1)
-
             # Mining recursively on the tree
             mineTree(newHeaderTable, minSup,
                        newFreqSet, freqItemList)
@@ -151,29 +146,54 @@ def associationRule(freqItemSet, itemSetList, minConf):
                 rules.append([set(s), set(itemSet.difference(s)), confidence])
     return rules
 
-if __name__ == "__main__":
-    minSupRatio = 0.1
-    minConf = 0.5
-    fname = 'data7'
-    itemSetList, frequency = getFromFile(fname + '.csv')
+def getFrequencyFromList(itemSetList):
+    frequency = [1 for i in range(len(itemSetList))]
+    return frequency
+
+def fpgrowth(itemSetList, minSupRatio, minConf):
+    frequency = getFrequencyFromList(itemSetList)
     minSup = len(itemSetList) * minSupRatio
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
     if(fpTree == None):
         print('No frequent item set')
     else:
-        # fpTree.display()
         freqItems = []
         mineTree(headerTable, minSup, set(), freqItems)
-        
-        print('Frequent patterns:')
-        for x in freqItems:
-            print(x)
-
         rules = associationRule(freqItems, itemSetList, minConf)
-        print('\nRules:')
-        rules.sort(key= lambda x:x[2])
-        for rule in rules:
-            print('{} ==> {}   {:.3f}'.format(rule[0], rule[1], rule[2]))
-        
+        return freqItems, rules
 
-# https://www.kaggle.com/newshuntkannada/dataset-for-apriori-and-fp-growth-algorithm
+def fpgrowthFromFile(fname, minSupRatio, minConf):
+    itemSetList, frequency = getFromFile(fname)
+    minSup = len(itemSetList) * minSupRatio
+    fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
+    if(fpTree == None):
+        print('No frequent item set')
+    else:
+        freqItems = []
+        mineTree(headerTable, minSup, set(), freqItems)
+        rules = associationRule(freqItems, itemSetList, minConf)
+        return freqItems, rules
+
+if __name__ == "__main__":
+    optparser = OptionParser()
+    optparser.add_option('-f', '--inputFile',
+                         dest='inputFile',
+                         help='CSV filename',
+                         default=None)
+    optparser.add_option('-s', '--minSupport',
+                         dest='minSup',
+                         help='Min support (float)',
+                         default=0.5,
+                         type='float')
+    optparser.add_option('-c', '--minConfidence',
+                         dest='minConf',
+                         help='Min confidence (float)',
+                         default=0.5,
+                         type='float')
+
+    (options, args) = optparser.parse_args()
+
+    freqItemSet, rules = fpgrowthFromFile(
+        options.inputFile, options.minSup, options.minConf)
+
+    print(rules)

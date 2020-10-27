@@ -146,13 +146,14 @@ def associationRule(freqItemSet, itemSetList, minConf):
         for s in subsets:
             confidence = float(getSupport(itemSet, itemSetList) / getSupport(s, itemSetList))
             if(confidence > minConf):
-                rules.append([set(s), set(itemSet.difference(s)), confidence])
+                rules.append([set(s), set(itemSet.difference(s)),
+                              confidence, getSupport(itemSet, itemSetList), getSupport(s, itemSetList)])
     return rules
 
 if __name__ == "__main__":
-    minSupRatio = 0.1
-    minConf = 0.5
-    fname = 'data7'
+    minSupRatio = 0.2
+    minConf = 0.468
+    fname = 'kaggle'
     itemSetList, frequency = getFromFile(fname + '.csv')
     minSup = len(itemSetList) * minSupRatio
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
@@ -170,7 +171,7 @@ if __name__ == "__main__":
         rules = associationRule(freqItems, itemSetList, minConf)
         print('\nRules:')
         for rule in rules:
-            print('{} ==> {}   {:.3f}'.format(rule[0], rule[1], rule[2]))
+            print('{} ==> {}   {:.3f}   sup: {:.3f}  subsetsup: {:.3f}'.format(rule[0], rule[1], rule[2], rule[3] / len(itemSetList), rule[4] / len(itemSetList)))
         
 
 # https://www.kaggle.com/newshuntkannada/dataset-for-apriori-and-fp-growth-algorithm
