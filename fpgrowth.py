@@ -109,21 +109,22 @@ def findPrefixPath(basePat, headerTable):
 def mineTree(headerTable, minSup, preFix, freqItemList):
     # Sort the items with frequency and create a list
     sortedItemList = [item[0] for item in sorted(list(headerTable.items()), key=lambda p:p[1][0])] 
-    print('finish sorting', sortedItemList)
+    print('Finish sorting:', sortedItemList)
     # Start with the lowest frequency
     for item in sortedItemList:  
-        print('item', item)
+        print('Checking item:', item)
         print('in', sortedItemList)
         # Pattern growth is achieved by the concatenation of suffix pattern with frequent patterns generated from conditional FP-tree
         newFreqSet = preFix.copy()
         newFreqSet.add(item)
-        print('add', newFreqSet)
+        print('Adding new frequent set: ', newFreqSet)
         freqItemList.append(newFreqSet)
         # Find all prefix path, constrcut conditional pattern base
         conditionalPattBase, frequency = findPrefixPath(item, headerTable) 
         # Construct conditonal FP Tree with conditional pattern base
         conditionalTree, newHeaderTable = constructTree(conditionalPattBase, frequency, minSup) 
         if newHeaderTable != None:
+            print('Conditional tree for item:', item)
             conditionalTree.display()
             print()
             # print('current item', item)
