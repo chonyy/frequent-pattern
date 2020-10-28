@@ -109,18 +109,23 @@ def findPrefixPath(basePat, headerTable):
 def mineTree(headerTable, minSup, preFix, freqItemList):
     # Sort the items with frequency and create a list
     sortedItemList = [item[0] for item in sorted(list(headerTable.items()), key=lambda p:p[1][0])] 
-    # print('sortedItemList', sortedItemList)
+    print('finish sorting', sortedItemList)
     # Start with the lowest frequency
     for item in sortedItemList:  
+        print('item', item)
+        print('in', sortedItemList)
         # Pattern growth is achieved by the concatenation of suffix pattern with frequent patterns generated from conditional FP-tree
         newFreqSet = preFix.copy()
         newFreqSet.add(item)
+        print('add', newFreqSet)
         freqItemList.append(newFreqSet)
         # Find all prefix path, constrcut conditional pattern base
         conditionalPattBase, frequency = findPrefixPath(item, headerTable) 
         # Construct conditonal FP Tree with conditional pattern base
         conditionalTree, newHeaderTable = constructTree(conditionalPattBase, frequency, minSup) 
         if newHeaderTable != None:
+            conditionalTree.display()
+            print()
             # print('current item', item)
             # print('conditional tree for: ', newFreqSet)
             # conditionalTree.display(1)
@@ -128,6 +133,8 @@ def mineTree(headerTable, minSup, preFix, freqItemList):
             # Mining recursively on the tree
             mineTree(newHeaderTable, minSup,
                        newFreqSet, freqItemList)
+        else:
+            print()
 
 def powerset(s):
     return chain.from_iterable(combinations(s, r) for r in range(1, len(s)))
@@ -151,12 +158,13 @@ def associationRule(freqItemSet, itemSetList, minConf):
     return rules
 
 if __name__ == "__main__":
-    minSupRatio = 0.2
-    minConf = 0.468
-    fname = 'kaggle'
+    minSupRatio = 0.5
+    minConf = 0.5
+    fname = 'tesco'
     itemSetList, frequency = getFromFile(fname + '.csv')
     minSup = len(itemSetList) * minSupRatio
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
+    fpTree.display()
     if(fpTree == None):
         print('No frequent item set')
     else:
