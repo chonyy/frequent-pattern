@@ -1,6 +1,7 @@
 from collections import defaultdict, OrderedDict
 from csv import reader
 from itertools import chain, combinations
+import time
 
 class Node:
     def __init__(self, itemName, frequency, parentNode):
@@ -52,7 +53,7 @@ def constructTree(itemSetList, frequency, minSup):
     # Update FP tree for each cleaned and sorted itemSet
     for idx, itemSet in enumerate(itemSetList):
         itemSet = [item for item in itemSet if item in headerTable]
-        itemSet.sort(key=lambda item: headerTable[item][0], reverse=True)
+        itemSet.sort(key=lambda item: headerTable[item][0], reverse=False)
         # Traverse from root to leaf, update tree with given item
         currentNode = fpTree
         for item in itemSet:
@@ -123,6 +124,7 @@ def mineTree(headerTable, minSup, preFix, freqItemList):
         conditionalPattBase, frequency = findPrefixPath(item, headerTable) 
         # Construct conditonal FP Tree with conditional pattern base
         conditionalTree, newHeaderTable = constructTree(conditionalPattBase, frequency, minSup) 
+        print(newHeaderTable)
         if newHeaderTable != None:
             print('Conditional tree for item:', item)
             conditionalTree.display()
@@ -159,28 +161,29 @@ def associationRule(freqItemSet, itemSetList, minConf):
     return rules
 
 if __name__ == "__main__":
-    minSupRatio = 0.5
+    minSupRatio = 0.07
     minConf = 0.5
-    fname = 'tesco'
+    fname = 'data7'
     itemSetList, frequency = getFromFile(fname + '.csv')
     minSup = len(itemSetList) * minSupRatio
+    startTime = time.time()
     fpTree, headerTable = constructTree(itemSetList, frequency, minSup)
-    fpTree.display()
+    # fpTree.display()
     if(fpTree == None):
         print('No frequent item set')
     else:
         # fpTree.display()
         freqItems = []
         mineTree(headerTable, minSup, set(), freqItems)
-        
-        print('Frequent patterns:')
-        for x in freqItems:
-            print(x)
+        print(time.time() - startTime)
+        # print('Frequent patterns:')
+        # for x in freqItems:
+        #     print(x)
 
-        rules = associationRule(freqItems, itemSetList, minConf)
-        print('\nRules:')
-        for rule in rules:
-            print('{} ==> {}   {:.3f}   sup: {:.3f}  subsetsup: {:.3f}'.format(rule[0], rule[1], rule[2], rule[3] / len(itemSetList), rule[4] / len(itemSetList)))
+        # rules = associationRule(freqItems, itemSetList, minConf)
+        # print('\nRules:')
+        # for rule in rules:
+        #     print('{} ==> {}   {:.3f}   sup: {:.3f}  subsetsup: {:.3f}'.format(rule[0], rule[1], rule[2], rule[3] / len(itemSetList), rule[4] / len(itemSetList)))
         
 
 # https://www.kaggle.com/newshuntkannada/dataset-for-apriori-and-fp-growth-algorithm
